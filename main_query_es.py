@@ -1,7 +1,7 @@
 from elasticsearch import Elasticsearch
 import json
 from datetime import datetime, timedelta
-es = Elasticsearch(["http://10.11.101.129:9200"])
+es = Elasticsearch(["http://192.168.143.54:9200"])
 # current_date = datetime.now()
 
 # # Tính ngày hôm qua (ngày trước của ngày hiện tại)

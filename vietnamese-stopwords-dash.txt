@@ -1940,9 +1940,3 @@ yêu_cầu
 ừ_ào
 ừ_ừ
 ử
-tp
-tp.
-clb
-hcm
-vn
-đối_tượng

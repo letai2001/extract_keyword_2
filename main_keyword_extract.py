@@ -8,8 +8,8 @@ from langdetect import detect as detect2
 with open('vietnamese-stopwords-dash.txt', 'r', encoding='utf-8') as f:
     stop_words = f.read().splitlines()
     
-with open('content_test_newquery.filter.json', 'r' , encoding='utf-8') as file:
-    data = json.load(file)
+# with open('content_test_newquery.filter.json', 'r' , encoding='utf-8') as file:
+#     data = json.load(file)
 
 vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNLP-1.2.jar" ,  annotators="wseg,pos", max_heap_size='-Xmx2g')
 
@@ -86,6 +86,7 @@ def extract_noun(key_words_info):
     type_data = ""
 
     for word, word_type in key_words_info:
+        
         if word_type in list_accept:
             if data_key_word == "":
                 data_key_word = word
@@ -167,6 +168,9 @@ def extract_keyword_title(data , vn_core , stop_words):
     return key_words_dict
     
 if __name__ == '__main__':
+    with open('content_test_newquery.filter.json', 'r' , encoding='utf-8') as file:
+        data = json.load(file)
+
     extract_keyword_title(data , vn_core , stop_words)
 
 

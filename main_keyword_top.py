@@ -57,15 +57,21 @@ def calculate_daily_keywords(input_date, data):
             for keyword in item['keywords']:
                 keyword_counts[date_str][keyword] += 1
 
+    # Kiểm tra số lượng bài viết cho ngày đó
+    if date_counts[input_date] < 970:
+        # Nếu số lượng bài viết nhỏ hơn 900, trả về danh sách rỗng và số lượng bài viết
+        return [], date_counts[input_date]
+
     # Tính phần trăm xuất hiện của từng keyword
-    keyword_percentages = [{ "keyword": keyword, "percentage": (count / date_counts[input_date]) * 100}
+    keyword_percentages = [{"keyword": keyword, "percentage": (count / date_counts[input_date]) * 100}
                            for keyword, count in keyword_counts[input_date].items()]
 
     # Trả về dữ liệu theo định dạng yêu cầu
-    return keyword_percentages
-def calculate_top_keywords(input_date, data, historical_data_file, stop_words):
+    return keyword_percentages, date_counts[input_date]
+
+def calculate_top_keywords(input_date, data, historical_data_file, black_words):
     # Tính toán keywords cho ngày nhập vào
-    daily_keywords = calculate_daily_keywords(input_date, data)
+    daily_keywords , date_counts = calculate_daily_keywords(input_date, data)
 
     # Đọc dữ liệu lịch sử từ file JSON
     with open(historical_data_file, 'r', encoding='utf-8') as file:
@@ -85,7 +91,11 @@ def calculate_top_keywords(input_date, data, historical_data_file, stop_words):
                 keyword_percentages[record['date']][k['keyword']] = k['percentage']
 
     # Kiểm tra đủ dữ liệu cho 7 ngày (6 ngày trước và ngày nhập vào)
-    sufficient_data = all(date in [record['date'] for record in historical_data] for date in previous_dates_str)
+    # sufficient_data = all(date in [record['date'] for record in historical_data] for date in previous_dates_str)
+    sufficient_data = all(
+        any(record['date'] == date and record['keywords'] for record in historical_data) 
+        for date in previous_dates_str
+    )
 
     # Xác định các top keywords
     if sufficient_data:
@@ -95,7 +105,7 @@ def calculate_top_keywords(input_date, data, historical_data_file, stop_words):
         "percentage": kw_dict['percentage']
     } 
     for kw_dict in daily_keywords 
-    if kw_dict['keyword'] not in stop_words and is_keyword_selected(kw_dict['keyword'], keyword_percentages, input_date)
+    if kw_dict['keyword'] not in black_words and is_keyword_selected(kw_dict['keyword'], keyword_percentages, input_date)
         ]
 
     else:
@@ -134,10 +144,10 @@ if __name__ == '__main__':
     historical_data_file = 'keyword_percentages_main_title.json'
     with open('keyword_test_27.1_filter_new.json', 'r', encoding='utf-8') as file:
         data = json.load(file)
-    with open('vietnamese-stopwords-dash.txt', 'r', encoding='utf-8') as f:
-        stop_words = f.read().splitlines()
+    with open('black_list.txt', 'r', encoding='utf-8') as f:
+        black_words = f.read().splitlines()
 
-    top_keywords = calculate_top_keywords(input_date, data, historical_data_file , stop_words)
+    top_keywords = calculate_top_keywords(input_date, data, historical_data_file , black_words)
     print(f"Top keywords for {input_date}: {top_keywords}")
     # stat_keyword(start_str , end_str , data)
 
