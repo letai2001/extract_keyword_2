@@ -41,7 +41,7 @@ def is_keyword_selected(keyword, keyword_percentages, check_date_str):
         # Từ được chọn theo tiêu chí 1
         return True   
 
-def calculate_daily_keywords(input_date, data):
+def calculate_daily_keywords(input_date, data , black_words):
     # Đọc dữ liệu từ file JSON
 
     date_format = "%m/%d/%Y"
@@ -64,14 +64,15 @@ def calculate_daily_keywords(input_date, data):
 
     # Tính phần trăm xuất hiện của từng keyword
     keyword_percentages = [{"keyword": keyword, "percentage": (count / date_counts[input_date]) * 100}
-                           for keyword, count in keyword_counts[input_date].items()]
-
+                           for keyword, count in keyword_counts[input_date].items()
+                           if keyword not in black_words]
+    keyword_percentages = sorted(keyword_percentages, key=lambda x: x['percentage'], reverse=True)
     # Trả về dữ liệu theo định dạng yêu cầu
     return keyword_percentages, date_counts[input_date]
 
 def calculate_top_keywords(input_date, data, historical_data_file, black_words):
     # Tính toán keywords cho ngày nhập vào
-    daily_keywords , date_counts = calculate_daily_keywords(input_date, data)
+    daily_keywords , date_counts = calculate_daily_keywords(input_date, data , black_words)
 
     # Đọc dữ liệu lịch sử từ file JSON
     with open(historical_data_file, 'r', encoding='utf-8') as file:

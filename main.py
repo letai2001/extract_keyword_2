@@ -34,7 +34,7 @@ def main():
     today = datetime.today()
     input_day = datetime.today() - timedelta(days=1)
     input_day_str = input_day.strftime("%m/%d/%Y")
-    
+    historical_data = []
 
     # Xác định ngày trước input_day 7 ngày
     seven_days_before_input = input_day - timedelta(days=7)
@@ -52,8 +52,18 @@ def main():
                 last_day = seven_days_before_input
         else:
             last_day = seven_days_before_input  # Mặc định nếu không có dữ liệu
-    except (FileNotFoundError, json.JSONDecodeError):
-        last_day = seven_days_before_input  # Mặc định nếu file không tồn tại hoặc lỗi khi đọc
+    except FileNotFoundError:
+        # Tạo file mới với dữ liệu rỗng nếu file không tồn tại
+        with open('keyword_percentages_main_title.json', 'w', encoding='utf-8') as file:
+            json.dump(historical_data, file, ensure_ascii=False, indent=4)
+        last_day = seven_days_before_input
+
+    except json.JSONDecodeError:
+        # Xử lý trường hợp lỗi đọc file JSON
+        print("JSON file is corrupted. Starting with empty historical data.")
+        last_day = seven_days_before_input
+
+
     input_day_str = input_day.strftime("%Y/%m/%d 23:59:59")
     
     dataFramse_Log = query_day(last_day.strftime("%Y/%m/%d 00:00:00"), input_day_str)
