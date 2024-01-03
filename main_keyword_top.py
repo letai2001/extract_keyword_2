@@ -114,7 +114,7 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words):
 
     # Kiểm tra và thêm dữ liệu mới vào historical_data nếu cần
     date_exists = any(record['date'] == input_date for record in historical_data)
-    if not date_exists:
+    if not date_exists and (top_keywords or daily_keywords):
         historical_data.append({
             "date": input_date,
             "keywords_top": top_keywords,
