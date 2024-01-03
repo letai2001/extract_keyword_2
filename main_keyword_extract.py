@@ -16,16 +16,19 @@ vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNL
 def is_valid_vietnamese_text(text, word_limit):
     try:
         # Chỉ xét một số từ đầu tiên
-        words = text.split()[:word_limit]
+        if(len(text.split()) <= word_limit):
+            words = text.split()
+        else:
+            words = text.split()[:word_limit]
         sample_text = ' '.join(words)
 
         # Kiểm tra ngôn ngữ của đoạn văn bản mẫu
         if detect(sample_text) != 'vi':
             return False
-
+        non_alpha_numeric_pattern = re.compile(r'[^a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ\s]')
         # Sử dụng biểu thức chính quy để tìm các ký tự không phải là chữ cái
-        non_alpha_pattern = re.compile(r'[^a-zA-ZàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ\s]')
-        non_alpha_chars = non_alpha_pattern.findall(sample_text)
+        # non_alpha_pattern = re.compile(r'[^a-zA-ZàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ\s]')
+        non_alpha_chars = non_alpha_numeric_pattern.findall(sample_text)
 
         if len(non_alpha_chars) / len(sample_text) > 0.1: # Thay đổi tỷ lệ này tùy theo nhu cầu
             return False

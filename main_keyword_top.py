@@ -95,7 +95,7 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words):
     # sufficient_data = all(date in [record['date'] for record in historical_data] for date in previous_dates_str)
     sufficient_data = all(
         any(record['date'] == date and record['keywords'] for record in historical_data) 
-        for date in previous_dates_str
+        for date in previous_dates_str if date != input_date 
     )
 
     # Xác định các top keywords

@@ -37,7 +37,7 @@ def main():
     historical_data = []
 
     # Xác định ngày trước input_day 7 ngày
-    seven_days_before_input = input_day - timedelta(days=7)
+    seven_days_before_input = input_day - timedelta(days=14)
 
     # Đọc và xác định last_day trong keyword_percentages_main_title.json
     try:
@@ -100,6 +100,6 @@ if __name__ == "__main__":
         # Tính thời gian cần ngủ đến đầu ngày hôm sau
         sleep_time = (tomorrow - now).total_seconds()
         print(f"Hàm main đã chạy xong. Đợi {sleep_time} giây đến đầu ngày hôm sau.")
-
+ 
         time.sleep(sleep_time)  # Ngủ đến đầu ngày hôm sau
 
