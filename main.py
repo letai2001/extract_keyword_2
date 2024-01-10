@@ -118,6 +118,25 @@ def get_latest_hour_from_data(data):
         if created_time.hour > latest_hour:
             latest_hour = created_time.hour
     return latest_hour
+def merge_extracted_keywords(old_data, new_data):
+    # Duyệt qua mỗi cặp khóa-giá trị trong new_data
+    for key, value in new_data.items():
+        # Nếu khóa không tồn tại trong old_data, thêm nó vào
+        if key not in old_data:
+            old_data[key] = value
+        else:
+            # Nếu khóa đã tồn tại, bạn có thể chọn cách hợp nhất
+            # Ví dụ, hợp nhất danh sách từ khóa
+            old_keywords = set(old_data[key]['keywords'])
+            new_keywords = set(value['keywords'])
+            combined_keywords = list(old_keywords.union(new_keywords))
+            old_data[key]['keywords'] = combined_keywords
+            # Cập nhật các trường khác nếu cần
+            # Ví dụ: Cập nhật 'title' và 'created_time' nếu mới hơn
+            if old_data[key]['created_time'] < value['created_time']:
+                old_data[key]['title'] = value['title']
+                old_data[key]['created_time'] = value['created_time']
+    return old_data
 
 def summarize_keywords_in_intervals(stop_words, black_words):
     try:
@@ -137,9 +156,11 @@ def summarize_keywords_in_intervals(stop_words, black_words):
         end_of_interval = start_of_day + timedelta(hours=interval_hours)
         if end_of_interval > current_time:
             end_of_interval = current_time
+        print(start_of_day.strftime("%Y/%m/%d %H:%M:%S"))
+        print(end_of_interval.strftime("%Y/%m/%d %H:%M:%S"))
         extracted_keywords = query_and_extract_keywords(start_of_day.strftime("%Y/%m/%d %H:%M:%S"), end_of_interval.strftime("%Y/%m/%d %H:%M:%S"), vn_core, stop_words)
         current_day_str = start_of_day.strftime("%m/%d/%Y")
-        old_extracted_keywords.update(extracted_keywords)
+        old_extracted_keywords = merge_extracted_keywords(old_extracted_keywords , extracted_keywords)
         top_keywords = calculate_top_keywords(current_day_str, old_extracted_keywords, keyword_today_file, black_words)
         # top_keywords_summary[current_day_str] = top_keywords
         start_of_day = end_of_interval
@@ -217,12 +238,11 @@ def run_summarize_keywords_in_intervals():
         if now.hour >= interval_hours and now.hour % interval_hours == 0:
             top_keywords_summary = summarize_keywords_in_intervals(stop_words, black_words)
             print("Tóm tắt từ khóa:", top_keywords_summary)
-        else:
-            # Tính thời gian ngủ đến khi giờ tiếp theo chia hết cho 4
-            sleep_hours = (interval_hours - (now.hour % interval_hours)) % interval_hours
-            sleep_time = (sleep_hours * 3600) - (now.minute * 60) - now.second
-            print(f"Chờ {sleep_time} giây cho đến khi thời gian hiện tại chia hết cho 4.")
-            time.sleep(sleep_time)
+        # Tính thời gian ngủ đến khi giờ tiếp theo chia hết cho 4
+        sleep_hours = (interval_hours - (now.hour % interval_hours)) % interval_hours
+        sleep_time = (sleep_hours * 3600) - (now.minute * 60) - now.second
+        print(f"Chờ {sleep_time} giây cho đến khi thời gian hiện tại chia hết cho 4.")
+        time.sleep(sleep_time)
 
 
 # Gọi hàm
