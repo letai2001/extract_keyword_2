@@ -15,18 +15,6 @@ with open('black_list.txt', 'r', encoding='utf-8') as f:
         black_words = f.read().splitlines()
 
 vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNLP-1.2.jar", annotators="wseg,pos", max_heap_size='-Xmx2g')
-# start_date = "2023-12-07"
-# end_date = "2023-12-14"
-# start_date = datetime.strptime(start_date, "%Y-%m-%d")
-# end_date = datetime.strptime(end_date, "%Y-%m-%d")
-# start_date_str = start_date.strftime("%Y/%m/%d 00:00:01")
-# end_date_str = end_date.strftime("%Y/%m/%d 00:00:00")
-# dataFramse_Log = query_day(start_date_str , end_date_str)
-# vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNLP-1.2.jar" ,  annotators="wseg,pos", max_heap_size='-Xmx2g')
-
-# data_title_dict = extract_keyword_title(dataFramse_Log , vn_core , stop_words)
-# input_date = "12/13/2023"
-# top_keywords = calculate_top_keywords(input_date, data_title_dict, 'keyword_percentages_main_title.json')import json
 from datetime import datetime, timedelta
 keyword_top_file = 'keyword_percentages_main_title.json'
 keyword_extract_file = 'keyword_test_27.1_filter_new.json'
@@ -101,14 +89,6 @@ def query_and_extract_keywords(start_time_str, end_time_str, vn_core, stop_words
     return extracted_keywords
 
 
-def get_latest_hour_from_data(data):
-    latest_hour = 0
-    for entry in data.values():
-        created_time_str = entry.get("created_time", "")
-        created_time = datetime.strptime(created_time_str, "%m/%d/%Y %H:%M:%S")
-        if created_time.hour > latest_hour:
-            latest_hour = created_time.hour
-    return latest_hour
 
 def get_latest_hour_from_data(data):
     latest_hour = 0
@@ -173,6 +153,7 @@ def summarize_keywords_in_intervals(stop_words, black_words):
         for i, item in enumerate(data):
             if item['date'] == top_keywords['date']:
                 data[i] = top_keywords
+                # del(data[i])
                 break
 
         # Ghi lại dữ liệu vào file JSON
@@ -181,68 +162,34 @@ def summarize_keywords_in_intervals(stop_words, black_words):
     else:
         print("Dữ liệu trong file không phải là một mảng.")
     return top_keywords
-# def process_current_interval_only(extract_keyword_file, stop_words, black_words, interval_hours=4):
-#     try:
-#         with open(extract_keyword_file, 'r', encoding='utf-8') as file:
-#             old_extracted_keywords =  json.load(file)
-#     except (FileNotFoundError, json.JSONDecodeError):
-#         old_extracted_keywords =  {}
-#     now = datetime.now()
-#     # Làm tròn thời gian xuống giờ gần nhất
-#     current_time = now.replace(minute=0, second=0, microsecond=0)
-#     # Tính toán thời gian bắt đầu của khoảng thời gian hiện tại
-#     start_of_current_interval = current_time - timedelta(hours=current_time.hour % interval_hours)
 
-#     # Trích xuất từ khóa cho khoảng thời gian hiện tại
-#     extracted_keywords = query_and_extract_keywords(start_of_current_interval.strftime("%Y/%m/%d %H:%M:%S"), current_time.strftime("%Y/%m/%d %H:%M:%S"), vn_core, stop_words)
-
-#     # Hợp nhất từ khóa cũ với từ khóa mới
-#     combined_extracted_keywords = {**old_extracted_keywords, **extracted_keywords}
-#     with open(extract_keyword_file, 'w', encoding='utf-8') as file:
-#         json.dump(combined_extracted_keywords, file, ensure_ascii=False, indent=4)
-#     # Tính toán từ khóa hàng đầu
-#     current_day_str = start_of_current_interval.strftime("%m/%d/%Y")
-#     top_keywords = calculate_top_keywords(current_day_str, combined_extracted_keywords, 'keyword_percentages_main_title_today.json', black_words)
-
-#     return top_keywords
-
-
-# Sử dụng hàm
-# Giả sử bạn đã đọc danh sách từ dừng và danh sách đen vào biến `stop_words` và `black_words`
-# top_keywords_summary = summarize_keywords_in_intervals(stop_words, black_words)
-# print("Tổng hợp từ khóa hàng đầu:", top_keywords_summary)
-
-def should_run_and_sleep():
-    while True:
-        now = datetime.now()
-        
-        # Kiểm tra nếu thời gian hiện tại lớn hơn 4 giờ sáng và giờ chia hết cho 4
-        if now.hour >= interval_hours and now.hour % interval_hours == 0:
-            return
-        else:
-            # Tính thời gian ngủ đến khi giờ tiếp theo chia hết cho 4
-            sleep_hours = (interval_hours - (now.hour % interval_hours)) % interval_hours
-            sleep_time = (sleep_hours * 3600) - (now.minute * 60) - now.second
-            print(f"Chờ {sleep_time} giây cho đến khi thời gian hiện tại chia hết cho 4.")
-            time.sleep(sleep_time)
                                                                                           
 def run_summarize_keywords_in_intervals():
-    # should_run_and_sleep()
-    # print("Đang chạy hàm summarize_keywords_in_intervals...")
-    # top_keywords_summary = summarize_keywords_in_intervals(stop_words, black_words)
-    # print("Tóm tắt từ khóa:", top_keywords_summary)
+    current_day = datetime.datetime.now().day
+
     while True:
-        now = datetime.now()
+        now = datetime.datetime.now()
         
-        # Kiểm tra nếu thời gian hiện tại lớn hơn 4 giờ sáng và giờ chia hết cho 4
+        # Kiểm tra nếu sang ngày mới
+        if now.day != current_day:
+            print("Đã sang ngày mới.")
+            break
+        
+        # Kiểm tra nếu thời gian hiện tại lớn hơn 4 giờ sáng và giờ chia hết cho interval_hours
         if now.hour >= interval_hours and now.hour % interval_hours == 0:
             top_keywords_summary = summarize_keywords_in_intervals(stop_words, black_words)
             print("Tóm tắt từ khóa:", top_keywords_summary)
-        # Tính thời gian ngủ đến khi giờ tiếp theo chia hết cho 4
-        sleep_hours = (interval_hours - (now.hour % interval_hours)) % interval_hours
+            sleep_hours = interval_hours
+        
+        else:
+            # Tính thời gian ngủ đến khi giờ tiếp theo chia hết cho interval_hours
+            sleep_hours = (interval_hours - (now.hour % interval_hours)) % interval_hours
+        if now.hour == 0:
+            sleep_hours = interval_hours
         sleep_time = (sleep_hours * 3600) - (now.minute * 60) - now.second
-        print(f"Chờ {sleep_time} giây cho đến khi thời gian hiện tại chia hết cho 4.")
+        print(f"Chờ {sleep_time} giây cho đến khi thời gian hiện tại chia hết.")
         time.sleep(sleep_time)
+        
 
 
 # Gọi hàm
