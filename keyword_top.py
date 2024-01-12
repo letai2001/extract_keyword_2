@@ -6,7 +6,7 @@ import numpy as np
 import string
 import re
 import matplotlib.pyplot as plt
-
+import os
 
 # Tạo cấu trúc dữ liệu cho thống kê
 def is_keyword_selected(keyword, keyword_percentages, check_date_str):
@@ -123,13 +123,13 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words):
 
     # Giữ lại 7 ngày gần nhất trong historical_data và cập nhật file
     historical_data.sort(key=lambda x: datetime.strptime(x['date'], "%m/%d/%Y"), reverse=True)
-    try:
-        updated_historical_data = historical_data[:10]
-        with open(historical_data_file, 'w', encoding='utf-8') as file:
-            json.dump(updated_historical_data, file, ensure_ascii=False, indent=4)
-    except:
-        with open(historical_data_file, 'w', encoding='utf-8') as file:
-            json.dump(historical_data, file, ensure_ascii=False, indent=4)
+    # try:
+    #     updated_historical_data = historical_data[:10]
+    with open(historical_data_file, 'w', encoding='utf-8') as file:
+        json.dump(historical_data, file, ensure_ascii=False, indent=4)
+    # except:
+    #     with open(historical_data_file, 'w', encoding='utf-8') as file:
+    #         json.dump(historical_data, file, ensure_ascii=False, indent=4)
 
         
     
@@ -139,53 +139,52 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words):
         "keywords_top": top_keywords,
         "keywords": daily_keywords
     }
-def get_top_keywords_for_week(input_date, historical_data_file):
-    # Định dạng ngày
-    date_format = "%m/%d/%Y"
-    input_datetime = datetime.strptime(input_date, date_format)
+def plot_keyword_trends(keyword, percentages, dates, output_folder):
+    plt.figure(figsize=(10, 6))
+    plt.plot(dates, percentages, marker='o')
+    plt.title(f"Biến thiên phần trăm của từ '{keyword}' theo ngày")
+    plt.xlabel("Ngày")
+    plt.ylabel("Phần trăm xuất hiện")
+    plt.xticks(dates, rotation=45)
+    plt.grid(True)
 
-    week_dates = [(input_datetime - timedelta(days=i)).strftime(date_format) for i in range(7)]
+    image_path = os.path.join(output_folder, f"{keyword}.png")
+    plt.savefig(image_path)
+    plt.close()
 
-    # Đọc dữ liệu từ file JSON
-    with open(historical_data_file, 'r', encoding='utf-8') as file:
-        historical_data = json.load(file)
+    return image_path
 
-    keyword_totals = {}
-    for record in historical_data:
-        if record['date'] in week_dates:
-            for keyword_info in record['keywords_top']:
-                keyword = keyword_info['keyword']
-                percentage = keyword_info['percentage']
-                if keyword in keyword_totals:
-                    keyword_totals[keyword] += percentage
-                else:
-                    keyword_totals[keyword] = percentage
+def calculate_top_keywords(input_date, data, historical_data_file, black_words, output_folder):
+    # ... phần còn lại của hàm ...
 
-    top_keywords_list = [{"keyword": keyword, "percentage": percentage} for keyword, percentage in keyword_totals.items()]
+    # Sau khi xác định top_keywords
+    for keyword_dict in top_keywords:
+        keyword = keyword_dict['keyword']
+        
+        # Chuẩn bị dữ liệu cho biểu đồ
+        dates = sorted(keyword_percentages.keys(), key=lambda date: datetime.strptime(date, "%m/%d/%Y"))
+        percentages = [keyword_percentages[date].get(keyword, 0) for date in dates]
+        dates = [datetime.strptime(date, "%m/%d/%Y") for date in dates]
 
-    # Sắp xếp danh sách theo phần trăm giảm dần
-    sorted_keywords = sorted(top_keywords_list, key=lambda x: x["percentage"], reverse=True)
+        # Vẽ và lưu biểu đồ
+        image_path = plot_keyword_trends(keyword, percentages, dates, output_folder)
+        keyword_dict['image'] = image_path
 
-    output_file = 'top_keywords_for_week_.json'
-    with open(output_file, 'w', encoding='utf-8') as file:
-        json.dump(sorted_keywords, file, ensure_ascii=False, indent=4)
-
-    return sorted_keywords
 
 
 if __name__ == '__main__':
     input_day = datetime.today() - timedelta(days=1)
     input_day_str = input_day.strftime("%m/%d/%Y")    
     historical_data_file = 'keyword_percentages_main_title.json'
-    # with open('keyword_test_27.1_filter_new.json', 'r', encoding='utf-8') as file:
-    #     data = json.load(file)
-    # with open('black_list.txt', 'r', encoding='utf-8') as f:
-    #     black_words = f.read().splitlines()
-    # top_keywords = calculate_top_keywords(input_date, data, historical_data_file , black_words)
-    # print(f"Top keywords for {input_date}: {top_keywords}")
-    # # stat_keyword(start_str , end_str , data)
+    with open('keyword_test_27.1_filter_new.json', 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    with open('black_list.txt', 'r', encoding='utf-8') as f:
+        black_words = f.read().splitlines()
+    top_keywords = calculate_top_keywords(input_day_str, data, historical_data_file , black_words)
+    print(f"Top keywords for {input_day_str}: {top_keywords}")
+    # # # stat_keyword(start_str , end_str , data)
 
-    # historical_data_file = 'keyword_percentages_main_title.json'
-    sorted_keywords = get_top_keywords_for_week(input_day_str, historical_data_file)
-    print(f"Top keywords for week ending on {input_day_str} saved to {sorted_keywords}")
+    # # historical_data_file = 'keyword_percentages_main_title.json'
+    # sorted_keywords = get_top_keywords_for_week(input_day_str, historical_data_file)
+    # print(f"Top keywords for week ending on {input_day_str} saved to {sorted_keywords}")
 

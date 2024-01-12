@@ -7,7 +7,7 @@ from langdetect import detect as detect2
 from query_es import query_day
 from keyword_extract import extract_keyword_title
 from collections import defaultdict
-from keyword_top import calculate_top_keywords , get_top_keywords_for_week
+from keyword_top import calculate_top_keywords 
 import time
 with open('vietnamese-stopwords-dash.txt', 'r', encoding='utf-8') as f:
     stop_words = f.read().splitlines()
@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 keyword_top_file = 'keyword_percentages_main_title.json'
 keyword_extract_file = 'keyword_test_27.1_filter_new.json'
 keyword_today_file = 'keyword_percentages_main_title_today.json'
-interval_hours = 3
+interval_hours = 5
 def main():
     # Bước 1: Xác định last_day trong keyword_percentages_main_title.json
     today = datetime.today()
@@ -80,8 +80,8 @@ def main():
         current_day += timedelta(days=1)
         
     input_day_str = input_day.strftime("%m/%d/%Y")
-    keyword_week = get_top_keywords_for_week(input_day_str ,'keyword_percentages_main_title.json' )
-    with open('keyword_test_27.1_filter_new', 'w', encoding='utf-8') as file:
+    # keyword_week = get_top_keywords_for_week(input_day_str ,keyword_today_file )
+    with open(keyword_extract_file, 'w', encoding='utf-8') as file:
             json.dump({}, file, ensure_ascii=False, indent=4)
 def query_and_extract_keywords(start_time_str, end_time_str, vn_core, stop_words):
     dataFramse_Log = query_day(start_time_str, end_time_str)
@@ -97,6 +97,7 @@ def get_latest_hour_from_data(data):
         created_time = datetime.strptime(created_time_str, "%m/%d/%Y %H:%M:%S")
         if created_time.hour > latest_hour:
             latest_hour = created_time.hour
+        
     return latest_hour
 def merge_extracted_keywords(old_data, new_data):
     # Duyệt qua mỗi cặp khóa-giá trị trong new_data
@@ -165,10 +166,10 @@ def summarize_keywords_in_intervals(stop_words, black_words):
 
                                                                                           
 def run_summarize_keywords_in_intervals():
-    current_day = datetime.datetime.now().day
+    current_day = datetime.now().day
 
     while True:
-        now = datetime.datetime.now()
+        now = datetime.now()
         
         # Kiểm tra nếu sang ngày mới
         if now.day != current_day:
