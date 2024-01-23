@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import os
 
 # Tạo cấu trúc dữ liệu cho thống kê
-def is_keyword_selected(keyword, keyword_percentages, check_date_str):
+def is_keyword_selected(keyword, keyword_percentages,daily_keywords ,  check_date_str):
     
-    percentage_on_check_date = keyword_percentages[check_date_str].get(keyword, 0)
+    percentage_on_check_date = next((item['percentage'] for item in daily_keywords if item['keyword'] == keyword), 0)    
     
     # Lấy phần trăm của từ trong các ngày khác
     other_dates_percentages = [keyword_percentages[date][keyword] 
@@ -106,7 +106,7 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words):
         "percentage": kw_dict['percentage']
     } 
     for kw_dict in daily_keywords 
-    if kw_dict['keyword'] not in black_words and is_keyword_selected(kw_dict['keyword'], keyword_percentages, input_date)
+    if kw_dict['keyword'] not in black_words and is_keyword_selected(kw_dict['keyword'], keyword_percentages,daily_keywords, input_date)
         ]
 
     else:
@@ -154,8 +154,45 @@ def plot_keyword_trends(keyword, percentages, dates, output_folder):
 
     return image_path
 
-def calculate_top_keywords(input_date, data, historical_data_file, black_words, output_folder):
+def calculate_top_keywords_2(input_date, data, historical_data_file, black_words, output_folder):
     # ... phần còn lại của hàm ...
+    daily_keywords , date_counts = calculate_daily_keywords(input_date, data , black_words)
+
+    # Đọc dữ liệu lịch sử từ file JSON
+    with open(historical_data_file, 'r', encoding='utf-8') as file:
+        historical_data = json.load(file)
+
+    # Xác định 6 ngày trước ngày nhập vào cùng với ngày nhập vào
+    input_datetime = datetime.strptime(input_date, "%m/%d/%Y")
+    previous_dates = [input_datetime - timedelta(days=i) for i in range(1,7)]
+    previous_dates_str = [d.strftime("%m/%d/%Y") for d in previous_dates]
+    previous_dates_str.append(input_date)
+
+    # Lấy thông tin keywords từ 7 ngày gần nhất
+    keyword_percentages = defaultdict(dict)
+    for record in historical_data:
+        if record['date'] in previous_dates_str:
+            for k in record['keywords']:
+                keyword_percentages[record['date']][k['keyword']] = k['percentage']
+
+    # Kiểm tra đủ dữ liệu cho 7 ngày (6 ngày trước và ngày nhập vào)
+    # sufficient_data = all(date in [record['date'] for record in historical_data] for date in previous_dates_str)
+    sufficient_data = all(
+        any(record['date'] == date and record['keywords'] for record in historical_data) 
+        for date in previous_dates_str if date != input_date 
+    )
+    if sufficient_data:
+        top_keywords = [
+    {
+        "keyword": kw_dict['keyword'],
+        "percentage": kw_dict['percentage']
+    } 
+    for kw_dict in daily_keywords 
+    if kw_dict['keyword'] not in black_words and is_keyword_selected(kw_dict['keyword'], keyword_percentages, input_date)
+        ]
+
+    else:
+        top_keywords = daily_keywords
 
     # Sau khi xác định top_keywords
     for keyword_dict in top_keywords:
@@ -165,7 +202,6 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words, 
         dates = sorted(keyword_percentages.keys(), key=lambda date: datetime.strptime(date, "%m/%d/%Y"))
         percentages = [keyword_percentages[date].get(keyword, 0) for date in dates]
         dates = [datetime.strptime(date, "%m/%d/%Y") for date in dates]
-
         # Vẽ và lưu biểu đồ
         image_path = plot_keyword_trends(keyword, percentages, dates, output_folder)
         keyword_dict['image'] = image_path

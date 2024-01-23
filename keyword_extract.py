@@ -121,6 +121,7 @@ def extract_noun(key_words_info):
 
 
 def extract_keyword_title(data , vn_core , stop_words):
+    key_words_dict = {}
     for item in data:
         text = item['_source']['title']
         key_words = []
@@ -142,19 +143,21 @@ def extract_keyword_title(data , vn_core , stop_words):
         # key_word_np = list(set([word for sublist in ner_data for word, tag in sublist if tag != 'O']))
 
         # print(sentence_combined_data)
-        key_words_np = []
-        for w , pos in filtered_combined_data:
-            if((pos in ['Np' , 'Ny' , 'Nb' , 'Vb'] or (pos in ['N'] and '_' in w)) ):
-            # if((pos in ['Np' , 'Nb'] )):
+        # key_words_np = []
+        # for w , pos in filtered_combined_data:
+        #     if((pos in ['Np' , 'Ny' , 'Nb' , 'Vb'] or (pos in ['N'] and '_' in w)) ):
+        #     # if((pos in ['Np' , 'Nb'] )):
 
-            # if(pos in ['Np']  ):
+        #     # if(pos in ['Np']  ):
 
-                key_words_np.append(w)
-        key_words_np = [word.lower() for word in key_words_np]
-        key_words_np = list(set(key_words_np))
+        #         key_words_np.append(w)
+        # key_words_np = [word.lower() for word in key_words_np]
+        # key_words_np = list(set(key_words_np))
         key_words = extract_noun(filtered_combined_data)
-        key_words = [word.lower() for word in key_words if word.count('_') >= 2]
-        key_words.extend(key_words_np)
+        # key_words = [word.lower() for word in key_words if word.count('_') >= 2]
+        # key_words.extend(key_words_np)
+        key_words = [word.lower() for word in key_words if len(word) > 2]
+
         key_words = list(set(key_words))
         
         key_words_dict[item['_id']] = {

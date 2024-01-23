@@ -18,8 +18,16 @@ vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNL
 from datetime import datetime, timedelta
 keyword_top_file = 'keyword_percentages_main_title.json'
 keyword_extract_file = 'keyword_test_27.1_filter_new.json'
-keyword_today_file = 'keyword_percentages_main_title_today.json'
-interval_hours = 5
+keyword_today_file = 'keyword_percentages_main_title_noun_phase.json'
+query_data_file = 'content_test_newquery.filter.json'
+interval_hours = 4
+
+def query_and_extract_keywords(start_time_str, end_time_str, vn_core, stop_words):
+    dataFramse_Log = query_day(start_time_str, end_time_str)
+    extracted_keywords = extract_keyword_title(dataFramse_Log, vn_core, stop_words)
+    return extracted_keywords
+
+
 def main():
     # Bước 1: Xác định last_day trong keyword_percentages_main_title.json
     today = datetime.today()
@@ -56,12 +64,12 @@ def main():
 
 
     input_day_str = input_day.strftime("%Y/%m/%d 23:59:59")
-    
-    dataFramse_Log = query_day(last_day.strftime("%Y/%m/%d 00:00:00"), input_day_str)
-    
+    last_day_str = last_day.strftime("%Y/%m/%d 00:00:00")
+    extracted_keywords = query_and_extract_keywords(last_day_str , input_day_str ,vn_core , stop_words)
+    # dataFramse_Log = query_day(last_day.strftime("%Y/%m/%d 00:00:00"), input_day_str)
 
     # Xử lý dữ liệu truy vấn để trích xuất từ khóa
-    extracted_keywords = extract_keyword_title(dataFramse_Log, vn_core, stop_words)
+    # extracted_keywords = extract_keyword_title(dataFramse_Log, vn_core, stop_words)
     # Bước 3: Duyệt từ last_day đến input_day
     current_day = last_day
     
@@ -83,22 +91,28 @@ def main():
     # keyword_week = get_top_keywords_for_week(input_day_str ,keyword_today_file )
     with open(keyword_extract_file, 'w', encoding='utf-8') as file:
             json.dump({}, file, ensure_ascii=False, indent=4)
-def query_and_extract_keywords(start_time_str, end_time_str, vn_core, stop_words):
-    dataFramse_Log = query_day(start_time_str, end_time_str)
-    extracted_keywords = extract_keyword_title(dataFramse_Log, vn_core, stop_words)
-    return extracted_keywords
+    with open(query_data_file, 'w', encoding='utf-8') as file:
+            json.dump({}, file, ensure_ascii=False, indent=4)
 
 
 
 def get_latest_hour_from_data(data):
-    latest_hour = 0
+    latest_datetime = None
+
     for entry in data.values():
         created_time_str = entry.get("created_time", "")
-        created_time = datetime.strptime(created_time_str, "%m/%d/%Y %H:%M:%S")
-        if created_time.hour > latest_hour:
-            latest_hour = created_time.hour
-        
-    return latest_hour
+        if created_time_str:  # Kiểm tra xem chuỗi thời gian có tồn tại
+            created_time = datetime.strptime(created_time_str, "%m/%d/%Y %H:%M:%S")
+
+            # Cập nhật nếu chưa có thời gian mới nhất hoặc thời gian mới lớn hơn thời gian hiện tại
+            if not latest_datetime or created_time > latest_datetime:
+                latest_datetime = created_time
+
+    # Trả về giờ lớn nhất của ngày lớn nhất, nếu có dữ liệu
+    if latest_datetime:
+        return latest_datetime.hour
+    else:
+        return 0  # Hoặc giá trị mặc định nếu không có dữ liệu
 def merge_extracted_keywords(old_data, new_data):
     # Duyệt qua mỗi cặp khóa-giá trị trong new_data
     for key, value in new_data.items():
@@ -137,6 +151,7 @@ def summarize_keywords_in_intervals(stop_words, black_words):
         end_of_interval = start_of_day + timedelta(hours=interval_hours)
         if end_of_interval > current_time:
             end_of_interval = current_time
+            return
         print(start_of_day.strftime("%Y/%m/%d %H:%M:%S"))
         print(end_of_interval.strftime("%Y/%m/%d %H:%M:%S"))
         extracted_keywords = query_and_extract_keywords(start_of_day.strftime("%Y/%m/%d %H:%M:%S"), end_of_interval.strftime("%Y/%m/%d %H:%M:%S"), vn_core, stop_words)
@@ -145,26 +160,26 @@ def summarize_keywords_in_intervals(stop_words, black_words):
         top_keywords = calculate_top_keywords(current_day_str, old_extracted_keywords, keyword_today_file, black_words)
         # top_keywords_summary[current_day_str] = top_keywords
         start_of_day = end_of_interval
-    with open(keyword_today_file, 'r', encoding='utf-8') as file:
-                data = json.load(file)
+        with open(keyword_today_file, 'r', encoding='utf-8') as file:
+                    data = json.load(file)
 
-        # Kiểm tra nếu dữ liệu là một mảng
-    if isinstance(data, list):
-        # Tìm và cập nhật mục tương ứng
-        for i, item in enumerate(data):
-            if item['date'] == top_keywords['date']:
-                data[i] = top_keywords
-                # del(data[i])
-                break
+            # Kiểm tra nếu dữ liệu là một mảng
+        if isinstance(data, list):
+            # Tìm và cập nhật mục tương ứng
+            for i, item in enumerate(data):
+                if item['date'] == top_keywords['date']:
+                    data[i] = top_keywords
+                    # del(data[i])
+                    break
 
-        # Ghi lại dữ liệu vào file JSON
-        with open(keyword_today_file, 'w', encoding='utf-8') as file:
-            json.dump(data, file, ensure_ascii=False, indent=4)
-    else:
-        print("Dữ liệu trong file không phải là một mảng.")
+            # Ghi lại dữ liệu vào file JSON
+            with open(keyword_today_file, 'w', encoding='utf-8') as file:
+                json.dump(data, file, ensure_ascii=False, indent=4)
+        else:
+            print("Dữ liệu trong file không phải là một mảng.")
     return top_keywords
-
-                                                                                          
+                                                                      
+        
 def run_summarize_keywords_in_intervals():
     current_day = datetime.now().day
 
@@ -175,22 +190,20 @@ def run_summarize_keywords_in_intervals():
         if now.day != current_day:
             print("Đã sang ngày mới.")
             break
-        
-        # Kiểm tra nếu thời gian hiện tại lớn hơn 4 giờ sáng và giờ chia hết cho interval_hours
-        if now.hour >= interval_hours and now.hour % interval_hours == 0:
+        if now.hour > interval_hours or now.hour == interval_hours: 
             top_keywords_summary = summarize_keywords_in_intervals(stop_words, black_words)
             print("Tóm tắt từ khóa:", top_keywords_summary)
+        # Kiểm tra nếu thời gian hiện tại chia hết cho interval_hours
+        if now.hour % interval_hours == 0:
+            # Tính toán thời gian bắt đầu của khoảng thời gian trước đó
             sleep_hours = interval_hours
-        
         else:
             # Tính thời gian ngủ đến khi giờ tiếp theo chia hết cho interval_hours
             sleep_hours = (interval_hours - (now.hour % interval_hours)) % interval_hours
-        if now.hour == 0:
-            sleep_hours = interval_hours
+        # Tính thời gian ngủ đến khi giờ tiếp theo chia hết cho interval_hours
         sleep_time = (sleep_hours * 3600) - (now.minute * 60) - now.second
         print(f"Chờ {sleep_time} giây cho đến khi thời gian hiện tại chia hết.")
         time.sleep(sleep_time)
-        
 
 
 # Gọi hàm
