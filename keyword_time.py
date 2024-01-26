@@ -27,86 +27,6 @@ def get_top_keywords_for_month(historical_data_file):
     month_dates = [(datetime.now() - timedelta(days=i)).strftime("%m/%d/%Y") for i in range(30)]
     return get_top_keywords_for_dates_rank(month_dates, historical_data_file)
 
-def get_top_keywords_for_dates(dates, historical_data_file):
-    # Đọc dữ liệu từ file JSON
-    with open(historical_data_file, 'r', encoding='utf-8') as file:
-        historical_data = json.load(file)
-    
-    keyword_totals = {}
-    for record in historical_data:
-        if record['date'] in dates:
-            for keyword_info in record['keywords_top']:
-                keyword = keyword_info['keyword']
-                percentage = keyword_info['percentage']
-                if keyword in keyword_totals:
-                    keyword_totals[keyword] += percentage
-                else:
-                    keyword_totals[keyword] = percentage
-
-    top_keywords_list = [{"keyword": keyword, "percentage": percentage} for keyword, percentage in keyword_totals.items()]
-    sorted_keywords = sorted(top_keywords_list, key=lambda x: x["percentage"], reverse=True)
-
-    # Ghi ra file (có thể thay đổi tên file nếu cần)
-    output_file = 'top_keywords_for_selected_dates.json'
-    with open(output_file, 'w', encoding='utf-8') as file:
-        json.dump(sorted_keywords, file, ensure_ascii=False, indent=4)
-
-    return sorted_keywords
-# def get_top_keywords_for_dates_rank(dates, historical_data_file):
-#     # Đọc dữ liệu từ file JSON
-#     with open(historical_data_file, 'r', encoding='utf-8') as file:
-#         historical_data = json.load(file)
-    
-#     keyword_rankings = {}
-#     for record in historical_data:
-#         if record['date'] in dates:
-#             for rank, keyword_info in enumerate(record['keywords_top'], start=1):
-#                 keyword = keyword_info['keyword']
-#                 if(keyword=='việt_nam'):
-#                     print(1)
-#                 if keyword in keyword_rankings:
-#                     keyword_rankings[keyword] += rank
-#                 else:
-#                     keyword_rankings[keyword] =  rank
-
-#     top_keywords_list = [{"keyword": keyword, "ranking": ranking} for keyword, ranking in keyword_rankings.items()]
-#     sorted_keywords = sorted(top_keywords_list, key=lambda x: x["ranking"])
-
-#     # Ghi ra file (có thể thay đổi tên file nếu cần)
-#     output_file = 'top_keywords_for_selected_dates.json'
-#     with open(output_file, 'w', encoding='utf-8') as file:
-#         json.dump(sorted_keywords, file, ensure_ascii=False, indent=4)
-
-#     return sorted_keywords
-# def get_top_keywords_for_dates_rank(dates, historical_data_file):
-#     with open(historical_data_file, 'r', encoding='utf-8') as file:
-#         historical_data = json.load(file)
-
-#     # Tạo một set chứa tất cả các từ khóa
-#     all_keywords = {keyword_info['keyword'] for record in historical_data for keyword_info in record['keywords_top']}
-
-#     # Tạo một dictionary để nhanh chóng tìm thứ hạng của từ khóa
-#     daily_keyword_rank = {}
-#     for record in historical_data:
-#         if record['date'] in dates:
-#             daily_keyword_rank[record['date']] = {keyword_info['keyword']: rank for rank, keyword_info in enumerate(record['keywords_top'], start=1)}
-
-#     # Tính toán thứ hạng
-#     keyword_rankings = {}
-#     for date in dates:
-#         for keyword in all_keywords:
-#             rank = daily_keyword_rank.get(date, {}).get(keyword, 10000)
-#             keyword_rankings[keyword] = keyword_rankings.get(keyword, 0) + rank
-
-#     # Sắp xếp và tạo danh sách từ khóa
-#     sorted_keywords = sorted([{"keyword": keyword, "ranking": ranking} for keyword, ranking in keyword_rankings.items()], key=lambda x: x["ranking"])
-
-#     # Ghi ra file
-#     output_file = 'top_keywords_for_selected_dates.json'
-#     with open(output_file, 'w', encoding='utf-8') as file:
-#         json.dump(sorted_keywords, file, ensure_ascii=False, indent=4)
-
-#     return sorted_keywords
 def get_top_keywords_for_dates_rank(dates, historical_data_file):
     with open(historical_data_file, 'r', encoding='utf-8') as file:
         historical_data = json.load(file)
@@ -131,7 +51,7 @@ def get_top_keywords_for_dates_rank(dates, historical_data_file):
     for date in dates:
         
         for keyword in all_keywords:
-            if(keyword == 'việt_nam'):
+            if(keyword == 'thái_lan'):
                 print(1)
             rank_in_keywords_top = daily_keyword_rank.get(date, {}).get(keyword, 0)
             keywords_set = daily_keyword_check.get(date, {})

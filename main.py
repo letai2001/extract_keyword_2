@@ -7,7 +7,7 @@ from langdetect import detect as detect2
 from query_es import query_day
 from keyword_extract import extract_keyword_title
 from collections import defaultdict
-from keyword_top import calculate_top_keywords 
+from keyword_top import calculate_top_keywords_with_filter_on_top_100
 import time
 with open('vietnamese-stopwords-dash.txt', 'r', encoding='utf-8') as f:
     stop_words = f.read().splitlines()
@@ -18,7 +18,7 @@ vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNL
 from datetime import datetime, timedelta
 keyword_top_file = 'keyword_percentages_main_title.json'
 keyword_extract_file = 'keyword_test_27.1_filter_new.json'
-keyword_today_file = 'keyword_percentages_main_title_noun_phase.json'
+keyword_today_file = 'keyword_percentages_main_title_today.json'
 query_data_file = 'content_test_newquery.filter.json'
 interval_hours = 4
 
@@ -28,7 +28,7 @@ def query_and_extract_keywords(start_time_str, end_time_str, vn_core, stop_words
     return extracted_keywords
 
 
-def main():
+def run_keyword_all_day():
     # Bước 1: Xác định last_day trong keyword_percentages_main_title.json
     today = datetime.today()
     input_day = datetime.today() - timedelta(days=1)
@@ -80,7 +80,7 @@ def main():
             # Thực hiện query và extract_keyword_title
             # Giả sử query_day và extract_keyword_title đã được định nghĩa
             # Thực hiện calculate_top_keywords
-            top_keywords = calculate_top_keywords(current_day_str, extracted_keywords, keyword_today_file , black_words)
+            top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, extracted_keywords, keyword_today_file , black_words)
             # Hiển thị kết quả
             print(f"Top Keywords for {current_day_str}: {top_keywords}")
 
@@ -113,7 +113,8 @@ def get_latest_hour_from_data(data):
         return latest_datetime.hour
     else:
         return 0  # Hoặc giá trị mặc định nếu không có dữ liệu
-def merge_extracted_keywords(old_data, new_data):
+def merge_extracted_keywords(old_data, new_data): 
+    #gop 2 dictionary lai voi nhau
     # Duyệt qua mỗi cặp khóa-giá trị trong new_data
     for key, value in new_data.items():
         # Nếu khóa không tồn tại trong old_data, thêm nó vào
@@ -157,7 +158,7 @@ def summarize_keywords_in_intervals(stop_words, black_words):
         extracted_keywords = query_and_extract_keywords(start_of_day.strftime("%Y/%m/%d %H:%M:%S"), end_of_interval.strftime("%Y/%m/%d %H:%M:%S"), vn_core, stop_words)
         current_day_str = start_of_day.strftime("%m/%d/%Y")
         old_extracted_keywords = merge_extracted_keywords(old_extracted_keywords , extracted_keywords)
-        top_keywords = calculate_top_keywords(current_day_str, old_extracted_keywords, keyword_today_file, black_words)
+        top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, old_extracted_keywords, keyword_today_file, black_words)
         # top_keywords_summary[current_day_str] = top_keywords
         start_of_day = end_of_interval
         with open(keyword_today_file, 'r', encoding='utf-8') as file:
@@ -180,7 +181,7 @@ def summarize_keywords_in_intervals(stop_words, black_words):
     return top_keywords
                                                                       
         
-def run_summarize_keywords_in_intervals():
+def run_keyword_today():
     current_day = datetime.now().day
 
     while True:
@@ -212,7 +213,7 @@ if __name__ == "__main__":
     # main()
     # while True:
     while True:
-        main()  # Chạy hàm main
+        run_keyword_all_day()  # Chạy hàm main
 
         # Xác định thời điểm hiện tại và thời điểm bắt đầu của ngày hôm sau
         # now = datetime.now()
@@ -223,6 +224,6 @@ if __name__ == "__main__":
         # print(f"Hàm main đã chạy xong. Đợi {sleep_time} giây đến đầu ngày hôm sau.")
         
         # time.sleep(sleep_time)  # Ngủ đến đầu ngày hôm sau
-        run_summarize_keywords_in_intervals()
+        run_keyword_today()
 
 
