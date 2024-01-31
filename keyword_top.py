@@ -7,6 +7,27 @@ import string
 import re
 import matplotlib.pyplot as plt
 import os
+with open('black_list.txt', 'r', encoding='utf-8') as f:
+        black_words = f.read().splitlines()
+def is_not_blackword(word, black_words):
+    """
+    Kiểm tra xem một từ có phải là từ không mong muốn (black word) hay không.
+    Một từ được coi là black word nếu nó nằm trong danh sách black_words hoặc nếu nó chứa từ 'ảnh'.
+
+    :param word: Từ cần kiểm tra.
+    :param black_words: Danh sách các từ không mong muốn.
+    :return: True nếu từ là black word, ngược lại là False.
+    """
+    # Kiểm tra xem từ có nằm trong danh sách black_words không
+    if word in black_words:
+        return False
+    
+    # Kiểm tra xem từ có chứa 'ảnh' không
+    if 'ảnh' in word:
+        return False
+
+    # Trả về False nếu không thỏa mãn cả hai điều kiện trên
+    return True
 
 # Tạo cấu trúc dữ liệu cho thống kê
 def is_keyword_selected(keyword, keyword_percentages,daily_keywords ,  check_date_str):
@@ -73,7 +94,7 @@ def filter_keywords_all_words_no_sort(keyword_list):
 
     return filtered_keywords
 
-def calculate_daily_keywords(input_date, data , black_words):
+def calculate_daily_keywords(input_date, data ):
     # Đọc dữ liệu từ file JSON
 
     date_format = "%m/%d/%Y"
@@ -97,14 +118,14 @@ def calculate_daily_keywords(input_date, data , black_words):
     # Tính phần trăm xuất hiện của từng keyword
     keyword_percentages = [{"keyword": keyword, "percentage": (count / date_counts[input_date]) * 100}
                            for keyword, count in keyword_counts[input_date].items()
-                           if keyword not in black_words]
+                           if is_not_blackword(keyword,black_words)]
     keyword_percentages = sorted(keyword_percentages, key=lambda x: x['percentage'], reverse=True)
     # Trả về dữ liệu theo định dạng yêu cầu
     return keyword_percentages, date_counts[input_date]
 
-def calculate_top_keywords(input_date, data, historical_data_file, black_words):
+def calculate_top_keywords(input_date, data, historical_data_file):
     # Tính toán keywords cho ngày nhập vào
-    daily_keywords , date_counts = calculate_daily_keywords(input_date, data , black_words)
+    daily_keywords , date_counts = calculate_daily_keywords(input_date, data)
 
     # Đọc dữ liệu lịch sử từ file JSON
     with open(historical_data_file, 'r', encoding='utf-8') as file:
@@ -138,7 +159,7 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words):
         "percentage": kw_dict['percentage']
     } 
     for kw_dict in daily_keywords 
-    if kw_dict['keyword'] not in black_words and is_keyword_selected(kw_dict['keyword'], keyword_percentages,daily_keywords, input_date)
+    if  is_not_blackword(kw_dict['keyword'] , black_words) and is_keyword_selected(kw_dict['keyword'], keyword_percentages,daily_keywords, input_date)
         ]
 
     else:
@@ -172,9 +193,9 @@ def calculate_top_keywords(input_date, data, historical_data_file, black_words):
         "keywords": daily_keywords
     }
 
-def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_data_file, black_words):
+def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_data_file):
     # Tính toán keywords cho ngày nhập vào
-    daily_keywords, date_counts = calculate_daily_keywords(input_date, data, black_words)
+    daily_keywords, date_counts = calculate_daily_keywords(input_date, data)
 
     # Đọc dữ liệu lịch sử từ file JSON
     with open(historical_data_file, 'r', encoding='utf-8') as file:
@@ -201,7 +222,7 @@ def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_d
     if sufficient_data:
 
         for kw_dict in daily_keywords:
-            if kw_dict['keyword'] not in black_words and is_keyword_selected(kw_dict['keyword'], keyword_percentages,daily_keywords , input_date):
+            if  is_not_blackword(kw_dict['keyword'] , black_words) and is_keyword_selected(kw_dict['keyword'], keyword_percentages,daily_keywords , input_date):
                 top_keywords.append({
                     "keyword": kw_dict['keyword'],
                     "percentage": kw_dict['percentage']

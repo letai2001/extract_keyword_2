@@ -110,3 +110,4 @@ phóng_viên_dân_trí
 tp._hcm
 tp._hcm
 tphcm
+ảnh

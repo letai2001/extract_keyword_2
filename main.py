@@ -9,22 +9,19 @@ from keyword_extract import extract_keyword_title
 from collections import defaultdict
 from keyword_top import calculate_top_keywords_with_filter_on_top_100
 import time
-with open('vietnamese-stopwords-dash.txt', 'r', encoding='utf-8') as f:
-    stop_words = f.read().splitlines()
-with open('black_list.txt', 'r', encoding='utf-8') as f:
-        black_words = f.read().splitlines()
+
 
 vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNLP-1.2.jar", annotators="wseg,pos", max_heap_size='-Xmx2g')
 from datetime import datetime, timedelta
 keyword_top_file = 'keyword_percentages_main_title.json'
 keyword_extract_file = 'keyword_test_27.1_filter_new.json'
-keyword_today_file = 'keyword_percentages_main_title_today.json'
+keyword_today_file = 'keyword_percentages_main_title_noun_phase.json'
 query_data_file = 'content_test_newquery.filter.json'
 interval_hours = 4
 
-def query_and_extract_keywords(start_time_str, end_time_str, vn_core, stop_words):
+def query_and_extract_keywords(start_time_str, end_time_str, vn_core):
     dataFramse_Log = query_day(start_time_str, end_time_str)
-    extracted_keywords = extract_keyword_title(dataFramse_Log, vn_core, stop_words)
+    extracted_keywords = extract_keyword_title(dataFramse_Log, vn_core)
     return extracted_keywords
 
 
@@ -65,7 +62,7 @@ def run_keyword_all_day():
 
     input_day_str = input_day.strftime("%Y/%m/%d 23:59:59")
     last_day_str = last_day.strftime("%Y/%m/%d 00:00:00")
-    extracted_keywords = query_and_extract_keywords(last_day_str , input_day_str ,vn_core , stop_words)
+    extracted_keywords = query_and_extract_keywords(last_day_str , input_day_str ,vn_core )
     # dataFramse_Log = query_day(last_day.strftime("%Y/%m/%d 00:00:00"), input_day_str)
 
     # Xử lý dữ liệu truy vấn để trích xuất từ khóa
@@ -80,7 +77,7 @@ def run_keyword_all_day():
             # Thực hiện query và extract_keyword_title
             # Giả sử query_day và extract_keyword_title đã được định nghĩa
             # Thực hiện calculate_top_keywords
-            top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, extracted_keywords, keyword_today_file , black_words)
+            top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, extracted_keywords, keyword_today_file)
             # Hiển thị kết quả
             print(f"Top Keywords for {current_day_str}: {top_keywords}")
 
@@ -134,7 +131,7 @@ def merge_extracted_keywords(old_data, new_data):
                 old_data[key]['created_time'] = value['created_time']
     return old_data
 
-def summarize_keywords_in_intervals(stop_words, black_words):
+def summarize_keywords_in_intervals():
     try:
         with open(keyword_extract_file, 'r', encoding='utf-8') as file:
             old_extracted_keywords =  json.load(file)
@@ -155,10 +152,10 @@ def summarize_keywords_in_intervals(stop_words, black_words):
             return
         print(start_of_day.strftime("%Y/%m/%d %H:%M:%S"))
         print(end_of_interval.strftime("%Y/%m/%d %H:%M:%S"))
-        extracted_keywords = query_and_extract_keywords(start_of_day.strftime("%Y/%m/%d %H:%M:%S"), end_of_interval.strftime("%Y/%m/%d %H:%M:%S"), vn_core, stop_words)
+        extracted_keywords = query_and_extract_keywords(start_of_day.strftime("%Y/%m/%d %H:%M:%S"), end_of_interval.strftime("%Y/%m/%d %H:%M:%S"), vn_core)
         current_day_str = start_of_day.strftime("%m/%d/%Y")
         old_extracted_keywords = merge_extracted_keywords(old_extracted_keywords , extracted_keywords)
-        top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, old_extracted_keywords, keyword_today_file, black_words)
+        top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, old_extracted_keywords, keyword_today_file)
         # top_keywords_summary[current_day_str] = top_keywords
         start_of_day = end_of_interval
         with open(keyword_today_file, 'r', encoding='utf-8') as file:
@@ -192,7 +189,7 @@ def run_keyword_today():
             print("Đã sang ngày mới.")
             break
         if now.hour > interval_hours or now.hour == interval_hours: 
-            top_keywords_summary = summarize_keywords_in_intervals(stop_words, black_words)
+            top_keywords_summary = summarize_keywords_in_intervals()
             print("Tóm tắt từ khóa:", top_keywords_summary)
         # Kiểm tra nếu thời gian hiện tại chia hết cho interval_hours
         if now.hour % interval_hours == 0:

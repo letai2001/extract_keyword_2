@@ -5,8 +5,23 @@ import json
 import time
 from datetime import datetime, timedelta
 import calendar
+from fastapi import FastAPI
+import uvicorn
+
+app = FastAPI()
 
 historical_data_file = "keyword_percentages_main_title_noun_phase.json"
+def get_keywords_top_by_date(date):
+    with open(historical_data_file, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+
+    for entry in data:
+        if entry['date'] == date:
+            return entry.get('keywords_top', None)
+    return None
+
+# Đọc dữ liệu từ tệp JSON
+
 def get_top_keywords_for_today(historical_data_file):
     today_date = datetime.now().strftime("%m/%d/%Y")
     return get_top_keywords_for_dates_rank([today_date], historical_data_file)
@@ -74,6 +89,19 @@ def get_top_keywords_for_dates_rank(dates, historical_data_file):
 
     return sorted_keywords
 
-if __name__ == '__main__':
-    get_top_keywords_for_last_week(historical_data_file)
+@app.get("/keywords-top/{date:path}")
+async def read_keywords_top(date: str):
+    converted_date = date.replace('-', '/')
+    result = get_keywords_top_by_date(converted_date)
+    if result is not None:
+        return result
+    return {"message": "No data found for this date"}
+# if __name__ == '__main__':
+#     uvicorn.run(app, host="127.0.0.1", port=8000)
+# if __name__ == '__main__':
+#     date_to_search = '01/29/2024'
+#     keywords_top = get_keywords_top_by_date(date_to_search)
+
+#     if keywords_top is not None:
+#         print(f"Keywords top for {date_to_search}: {keywords_top}")
     
