@@ -139,19 +139,19 @@ def extract_keyword_title(data , vn_core ):
             (token, pos_tag) for sublist in combined_data for token, pos_tag in sublist if token.lower() not in stop_words
         ]
         print(filtered_combined_data)
-        # key_words_np = []
-        # for w , pos in filtered_combined_data:
-        #     if((pos in ['Np' , 'Ny' , 'Nb' , 'Vb'] or (pos in ['N'] and '_' in w)) ):
+        key_words_np = []
+        for w , pos in filtered_combined_data:
+            if((pos in ['Np' , 'Ny' , 'Nb' , 'Vb'] or (pos in ['N'] and '_' in w)) ):
         #     # if((pos in ['Np' , 'Nb'] )):
 
         #     # if(pos in ['Np']  ):
 
-        #         key_words_np.append(w)
-        # key_words_np = [word.lower() for word in key_words_np]
-        # key_words_np = list(set(key_words_np))
+                key_words_np.append(w)
+        key_words_np = [word.lower() for word in key_words_np]
+        key_words_np = list(set(key_words_np))
         key_words = extract_noun(filtered_combined_data)
-        # key_words = [word.lower() for word in key_words if word.count('_') >= 2]
-        # key_words.extend(key_words_np)
+        # key_words = [word.lower() for word in key_words if len(word) > 2]
+        key_words.extend(key_words_np)
         key_words = [word.lower() for word in key_words if len(word) > 2]
 
         key_words = list(set(key_words))
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     with open('content_test_newquery.filter.json', 'r' , encoding='utf-8') as file:
         data = json.load(file)
     
-    extract_keyword_title(data , vn_core , stop_words)
+    extract_keyword_title(data , vn_core)
     
     
     

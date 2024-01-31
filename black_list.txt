@@ -111,3 +111,11 @@ tp._hcm
 tp._hcm
 tphcm
 ảnh
+chương_trình
+kinh_tế
+cán_bộ
+tỉnh_uỷ
+lợi_nhuận
+xã_hội
+phiên_bản
+chủ_tịch

@@ -108,8 +108,8 @@ def query_day(start_date_str, end_date_str):
         json.dump(dataFramse_Log, f, ensure_ascii=False, indent=4)
     return dataFramse_Log
 if __name__ == '__main__':
-    start_date = "2023-12-07"
-    end_date = "2023-12-14"
+    start_date = "2024-01-30"
+    end_date = "2024-01-31"
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
     start_date_str = start_date.strftime("%Y/%m/%d 00:00:01")

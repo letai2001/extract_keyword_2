@@ -9,10 +9,15 @@ from keyword_extract import extract_keyword_title
 from collections import defaultdict
 from keyword_top import calculate_top_keywords_with_filter_on_top_100
 import time
+from elasticsearch import Elasticsearch
+from datetime import datetime, timedelta
 
+from keyword_save_es import get_historical_data_from_es , update_historical_data_to_es
+
+es = Elasticsearch(["http://192.168.143.54:9200"])
+historical_data_index = "top_kw_tilte_taile"
 
 vn_core = VnCoreNLP("C:\\Users\\Admin\\Downloads\\vncorenlp\\VnCoreNLP\\VnCoreNLP-1.2.jar", annotators="wseg,pos", max_heap_size='-Xmx2g')
-from datetime import datetime, timedelta
 keyword_top_file = 'keyword_percentages_main_title.json'
 keyword_extract_file = 'keyword_test_27.1_filter_new.json'
 keyword_today_file = 'keyword_percentages_main_title_noun_phase.json'
@@ -33,12 +38,11 @@ def run_keyword_all_day():
     historical_data = []
 
     # Xác định ngày trước input_day 7 ngày
-    seven_days_before_input = input_day - timedelta(days=14)
+    seven_days_before_input = input_day - timedelta(days=80)
 
     # Đọc và xác định last_day trong keyword_percentages_main_title.json
     try:
-        with open(keyword_today_file, 'r', encoding='utf-8') as file:
-            historical_data = json.load(file)
+        historical_data = get_historical_data_from_es(historical_data_index , es)
         if historical_data:
             last_day_str = historical_data[0]['date']
             last_day = datetime.strptime(last_day_str, "%m/%d/%Y")
@@ -48,16 +52,11 @@ def run_keyword_all_day():
                 last_day = seven_days_before_input
         else:
             last_day = seven_days_before_input  # Mặc định nếu không có dữ liệu
-    except FileNotFoundError:
+    except Exception as e:
+        print(e)
         # Tạo file mới với dữ liệu rỗng nếu file không tồn tại
-        with open(keyword_today_file, 'w', encoding='utf-8') as file:
-            json.dump(historical_data, file, ensure_ascii=False, indent=4)
         last_day = seven_days_before_input
 
-    except json.JSONDecodeError:
-        # Xử lý trường hợp lỗi đọc file JSON
-        print("JSON file is corrupted. Starting with empty historical data.")
-        last_day = seven_days_before_input
 
 
     input_day_str = input_day.strftime("%Y/%m/%d 23:59:59")
@@ -77,7 +76,7 @@ def run_keyword_all_day():
             # Thực hiện query và extract_keyword_title
             # Giả sử query_day và extract_keyword_title đã được định nghĩa
             # Thực hiện calculate_top_keywords
-            top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, extracted_keywords, keyword_today_file)
+            top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, extracted_keywords, historical_data_index , es)
             # Hiển thị kết quả
             print(f"Top Keywords for {current_day_str}: {top_keywords}")
 
@@ -155,24 +154,22 @@ def summarize_keywords_in_intervals():
         extracted_keywords = query_and_extract_keywords(start_of_day.strftime("%Y/%m/%d %H:%M:%S"), end_of_interval.strftime("%Y/%m/%d %H:%M:%S"), vn_core)
         current_day_str = start_of_day.strftime("%m/%d/%Y")
         old_extracted_keywords = merge_extracted_keywords(old_extracted_keywords , extracted_keywords)
-        top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, old_extracted_keywords, keyword_today_file)
+        top_keywords = calculate_top_keywords_with_filter_on_top_100(current_day_str, old_extracted_keywords, historical_data_index , es)
         # top_keywords_summary[current_day_str] = top_keywords
         start_of_day = end_of_interval
-        with open(keyword_today_file, 'r', encoding='utf-8') as file:
-                    data = json.load(file)
-
+        
+        data = get_historical_data_from_es(historical_data_index, es)
+        data.sort(key=lambda x: datetime.strptime(x['date'], "%m/%d/%Y"), reverse=True)
             # Kiểm tra nếu dữ liệu là một mảng
-        if isinstance(data, list):
+        if isinstance(data, list):  
             # Tìm và cập nhật mục tương ứng
             for i, item in enumerate(data):
                 if item['date'] == top_keywords['date']:
                     data[i] = top_keywords
                     # del(data[i])
                     break
-
+            update_historical_data_to_es(data, historical_data_index, es)
             # Ghi lại dữ liệu vào file JSON
-            with open(keyword_today_file, 'w', encoding='utf-8') as file:
-                json.dump(data, file, ensure_ascii=False, indent=4)
         else:
             print("Dữ liệu trong file không phải là một mảng.")
     return top_keywords

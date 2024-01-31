@@ -104,4 +104,3 @@ async def read_keywords_top(date: str):
 
 #     if keywords_top is not None:
 #         print(f"Keywords top for {date_to_search}: {keywords_top}")
-    

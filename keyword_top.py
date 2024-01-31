@@ -7,6 +7,8 @@ import string
 import re
 import matplotlib.pyplot as plt
 import os
+from elasticsearch import Elasticsearch
+from keyword_save_es import get_historical_data_from_es , update_historical_data_to_es
 with open('black_list.txt', 'r', encoding='utf-8') as f:
         black_words = f.read().splitlines()
 def is_not_blackword(word, black_words):
@@ -94,6 +96,7 @@ def filter_keywords_all_words_no_sort(keyword_list):
 
     return filtered_keywords
 
+
 def calculate_daily_keywords(input_date, data ):
     # Đọc dữ liệu từ file JSON
 
@@ -123,13 +126,12 @@ def calculate_daily_keywords(input_date, data ):
     # Trả về dữ liệu theo định dạng yêu cầu
     return keyword_percentages, date_counts[input_date]
 
-def calculate_top_keywords(input_date, data, historical_data_file):
+def calculate_top_keywords(input_date, data, historical_data_file, es):
     # Tính toán keywords cho ngày nhập vào
-    daily_keywords , date_counts = calculate_daily_keywords(input_date, data)
+    daily_keywords , date_counts = calculate_daily_keywords(input_date, data )
 
     # Đọc dữ liệu lịch sử từ file JSON
-    with open(historical_data_file, 'r', encoding='utf-8') as file:
-        historical_data = json.load(file)
+    historical_data = get_historical_data_from_es(historical_data_file, es)
 
     # Xác định 6 ngày trước ngày nhập vào cùng với ngày nhập vào
     input_datetime = datetime.strptime(input_date, "%m/%d/%Y")
@@ -178,9 +180,7 @@ def calculate_top_keywords(input_date, data, historical_data_file):
     historical_data.sort(key=lambda x: datetime.strptime(x['date'], "%m/%d/%Y"), reverse=True)
     # try:
     #     updated_historical_data = historical_data[:10]
-    with open(historical_data_file, 'w', encoding='utf-8') as file:
-        json.dump(historical_data, file, ensure_ascii=False, indent=4)
-    # except:
+    update_historical_data_to_es(historical_data, historical_data_file, es)    # except:
     #     with open(historical_data_file, 'w', encoding='utf-8') as file:
     #         json.dump(historical_data, file, ensure_ascii=False, indent=4)
 
@@ -193,13 +193,13 @@ def calculate_top_keywords(input_date, data, historical_data_file):
         "keywords": daily_keywords
     }
 
-def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_data_file):
+def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_data_file , es):
+    historical_data = []
     # Tính toán keywords cho ngày nhập vào
     daily_keywords, date_counts = calculate_daily_keywords(input_date, data)
+    historical_data = get_historical_data_from_es(historical_data_file, es)
 
     # Đọc dữ liệu lịch sử từ file JSON
-    with open(historical_data_file, 'r', encoding='utf-8') as file:
-        historical_data = json.load(file)
 
     # Xác định ngày trước ngày nhập vào cùng với ngày nhập vào
     input_datetime = datetime.strptime(input_date, "%m/%d/%Y")
@@ -237,18 +237,6 @@ def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_d
             top_keywords = daily_keywords
 
 
-    # if sufficient_data:
-    #     # Lấy 100 từ khóa hàng đầu và áp dụng thuật toán lọc
-    #     top_100_keywords = daily_keywords[:100]
-    #     filtered_top_100 = filter_keywords_all_words_no_sort([(kw['keyword'], kw['percentage']) for kw in top_100_keywords])
-    #     filtered_top_100_keywords = [{"keyword": kw, "percentage": perc} for kw, perc in filtered_top_100]
-
-    #     # Gộp 100 từ khóa hàng đầu sau lọc với phần còn lại của từ khóa
-    #     top_keywords = filtered_top_100_keywords + daily_keywords[100:]
-    # else:
-    #     top_keywords = daily_keywords
-
-
     # Cập nhật dữ liệu lịch sử
     date_exists = any(record['date'] == input_date for record in historical_data)
     if not date_exists and (top_keywords or daily_keywords):
@@ -259,14 +247,8 @@ def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_d
         })
 
     # Giữ lại 7 ngày gần nhất trong historical_data và cập nhật file
-    historical_data.sort(key=lambda x: datetime.strptime(x['date'], "%m/%d/%Y"), reverse=True)
-    try:
-        updated_historical_data = historical_data[:13]
-        with open(historical_data_file, 'w', encoding='utf-8') as file:
-            json.dump(updated_historical_data, file, ensure_ascii=False, indent=4)
-    except:
-        with open(historical_data_file, 'w', encoding='utf-8') as file:
-            json.dump(historical_data, file, ensure_ascii=False, indent=4)
+        historical_data.sort(key=lambda x: datetime.strptime(x['date'], "%m/%d/%Y"), reverse=True)
+        update_historical_data_to_es(historical_data, historical_data_file, es)    # except:
 
     return {
         "date": input_date,
@@ -277,14 +259,16 @@ def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_d
 
 
 if __name__ == '__main__':
+    es = Elasticsearch(['http://localhost:9200'])
+
     input_day = datetime.today() - timedelta(days=1)
     input_day_str = input_day.strftime("%m/%d/%Y")    
-    historical_data_file = 'keyword_percentages_main_title.json'
+    historical_data_file = "historical_data_index"
     with open('keyword_test_27.1_filter_new.json', 'r', encoding='utf-8') as file:
         data = json.load(file)
     with open('black_list.txt', 'r', encoding='utf-8') as f:
         black_words = f.read().splitlines()
-    top_keywords = calculate_top_keywords(input_day_str, data, historical_data_file , black_words)
+    top_keywords = calculate_top_keywords_with_filter_on_top_100(input_day_str, data, historical_data_file , es )
     print(f"Top keywords for {input_day_str}: {top_keywords}")
     # # # stat_keyword(start_str , end_str , data)
 
