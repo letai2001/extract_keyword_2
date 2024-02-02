@@ -26,6 +26,7 @@ list_link = ["https://vnexpress.net", "https://dantri.com.vn", "https://tuoitre.
              "http://cand.com.vn"  , "http://antg.cand.com.vn"  , "http://antgct.cand.com.vn" , "http://vnca.cand.com.vn" , 
              "http://cstc.cand.com.vn" , "https://nghiencuuchienluoc.org" , "https://bnews.vn" 
              ]
+
 def query_day(start_date_str, end_date_str):
     body1 = {
     "_source": ["title" , "created_time"],

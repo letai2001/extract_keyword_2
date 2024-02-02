@@ -11,8 +11,8 @@ from keyword_top import calculate_top_keywords_with_filter_on_top_100
 import time
 from elasticsearch import Elasticsearch
 from datetime import datetime, timedelta
-
-from keyword_save_es import get_historical_data_from_es , update_historical_data_to_es
+from time import sleep
+from keyword_save_es import fetch_all_records , update_historical_data_to_es
 
 es = Elasticsearch(["http://192.168.143.54:9200"])
 historical_data_index = "top_kw_tilte_taile"
@@ -38,11 +38,11 @@ def run_keyword_all_day():
     historical_data = []
 
     # Xác định ngày trước input_day 7 ngày
-    seven_days_before_input = input_day - timedelta(days=80)
+    seven_days_before_input = input_day - timedelta(days=90)
 
     # Đọc và xác định last_day trong keyword_percentages_main_title.json
     try:
-        historical_data = get_historical_data_from_es(historical_data_index , es)
+        historical_data = fetch_all_records(historical_data_index , es)
         if historical_data:
             last_day_str = historical_data[0]['date']
             last_day = datetime.strptime(last_day_str, "%m/%d/%Y")
@@ -158,7 +158,7 @@ def summarize_keywords_in_intervals():
         # top_keywords_summary[current_day_str] = top_keywords
         start_of_day = end_of_interval
         
-        data = get_historical_data_from_es(historical_data_index, es)
+        data = fetch_all_records(historical_data_index, es)
         data.sort(key=lambda x: datetime.strptime(x['date'], "%m/%d/%Y"), reverse=True)
             # Kiểm tra nếu dữ liệu là một mảng
         if isinstance(data, list):  
@@ -208,6 +208,8 @@ if __name__ == "__main__":
     # while True:
     while True:
         run_keyword_all_day()  # Chạy hàm main
+        print("Bắt đầu ngày hôm nay!")
+        sleep(10)
 
         # Xác định thời điểm hiện tại và thời điểm bắt đầu của ngày hôm sau
         # now = datetime.now()

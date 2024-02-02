@@ -255,7 +255,7 @@ def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_d
         "keywords_top": top_keywords,
         "keywords": daily_keywords
     }
-
+    
 
 
 if __name__ == '__main__':
