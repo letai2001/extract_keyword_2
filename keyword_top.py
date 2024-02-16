@@ -8,7 +8,7 @@ import re
 import matplotlib.pyplot as plt
 import os
 from elasticsearch import Elasticsearch
-from keyword_save_es import get_historical_data_from_es , update_historical_data_to_es
+from keyword_save_es import fetch_all_records , update_historical_data_to_es
 with open('black_list.txt', 'r', encoding='utf-8') as f:
         black_words = f.read().splitlines()
 def is_not_blackword(word, black_words):
@@ -131,7 +131,7 @@ def calculate_top_keywords(input_date, data, historical_data_file, es):
     daily_keywords , date_counts = calculate_daily_keywords(input_date, data )
 
     # Đọc dữ liệu lịch sử từ file JSON
-    historical_data = get_historical_data_from_es(historical_data_file, es)
+    historical_data = fetch_all_records(historical_data_file, es)
 
     # Xác định 6 ngày trước ngày nhập vào cùng với ngày nhập vào
     input_datetime = datetime.strptime(input_date, "%m/%d/%Y")
@@ -197,7 +197,7 @@ def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_d
     historical_data = []
     # Tính toán keywords cho ngày nhập vào
     daily_keywords, date_counts = calculate_daily_keywords(input_date, data)
-    historical_data = get_historical_data_from_es(historical_data_file, es)
+    historical_data = fetch_all_records(historical_data_file, es)
 
     # Đọc dữ liệu lịch sử từ file JSON
 
@@ -255,7 +255,7 @@ def calculate_top_keywords_with_filter_on_top_100(input_date, data, historical_d
         "keywords_top": top_keywords,
         "keywords": daily_keywords
     }
-    
+
 
 
 if __name__ == '__main__':
@@ -270,9 +270,4 @@ if __name__ == '__main__':
         black_words = f.read().splitlines()
     top_keywords = calculate_top_keywords_with_filter_on_top_100(input_day_str, data, historical_data_file , es )
     print(f"Top keywords for {input_day_str}: {top_keywords}")
-    # # # stat_keyword(start_str , end_str , data)
-
-    # # historical_data_file = 'keyword_percentages_main_title.json'
-    # sorted_keywords = get_top_keywords_for_week(input_day_str, historical_data_file)
-    # print(f"Top keywords for week ending on {input_day_str} saved to {sorted_keywords}")
 

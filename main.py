@@ -209,9 +209,9 @@ if __name__ == "__main__":
     while True:
         run_keyword_all_day()  # Chạy hàm main
         print("Bắt đầu ngày hôm nay!")
-        sleep(10)
+        sleep(5)
 
-        # Xác định thời điểm hiện tại và thời điểm bắt đầu của ngày hôm sau
+        # Xác định thời điểm hiện tại và thời điểm bắt đầu của ngàys hôm sau
         # now = datetime.now()
         # tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
         
